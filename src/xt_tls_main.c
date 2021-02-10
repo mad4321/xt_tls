@@ -89,6 +89,41 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
 	printk("[xt_tls] data[]: %64ph\n", data);
 	printk("[xt_tls] Content-type=0x%X\n", (unsigned char)data[0]);
 #endif
+
+        // HTTP check
+        if (data_len>20 && (data[0] == 'G' || data[0] == 'P') && (data[1] == 'E' || data[1] == 'O') && (data[2] == 'T' || data[2] == 'S') && (data[3] == ' ' || data[3] == 'T')) {
+            u_int offset = 0, name_offset = 0, name_length = 0;
+            while (offset < data_len) {
+                if (offset < data_len-5 && (data[offset] == 'H' || data[offset] == 'h') 
+                                        && (data[offset+1] == 'O' || data[offset+1] == 'o') 
+                                        && (data[offset+2] == 'S' || data[offset+2] == 's') 
+                                        && (data[offset+3] == 'T' || data[offset+3] == 't')) {
+                    offset += 4;
+                    while (offset<data_len && (data[offset] == ':' || data[offset] == ' ')) {
+                        offset++;
+                    }
+                    if (offset < data_len) {
+                        name_offset = offset;
+                        while (offset < data_len && data[offset] != 0x0D && data[offset] != 0x0A) {
+                            offset++;
+                        }
+                        name_length = offset - name_offset;
+                        if (name_length){
+                            // Allocate an extra byte for the null-terminator
+                            *dest = kmalloc(name_length + 1, GFP_KERNEL);
+                            strncpy(*dest, &data[offset], name_length);
+                            // Make sure the string is always null-terminated.
+                            (*dest)[name_length] = 0;
+                            free_data_buf();
+                            return 0;
+                        }
+                    }
+                }
+            }
+        }
+
+        //
+
 	// If this isn't an TLS handshake, abort
 	if (data[0] != 0x16) {
 #ifdef XT_TLS_DEBUG
