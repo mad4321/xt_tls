@@ -120,7 +120,7 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
                         if (name_length){
                             // Allocate an extra byte for the null-terminator
                             *dest = kmalloc(name_length + 1, GFP_KERNEL);
-                            strncpy(*dest, &data[offset], name_length);
+                            strncpy(*dest, &data[name_offset], name_length);
                             // Make sure the string is always null-terminated.
                             (*dest)[name_length] = 0;
 #ifdef XT_TLS_DEBUG
