@@ -92,7 +92,10 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
 
         // HTTP check
         if (data_len>20 && (data[0] == 'G' || data[0] == 'P') && (data[1] == 'E' || data[1] == 'O') && (data[2] == 'T' || data[2] == 'S') && (data[3] == ' ' || data[3] == 'T')) {
-            u_int offset = 0, name_offset = 0, name_length = 0;
+#ifdef XT_TLS_DEBUG
+            printk("[xt_tls] found HTTP header, data len: %d\n",data_len);
+#endif
+            u_int offset = 4, name_offset = 0, name_length = 0;
             while (offset < data_len) {
                 if (offset < data_len-5 && (data[offset] == 'H' || data[offset] == 'h') 
                                         && (data[offset+1] == 'O' || data[offset+1] == 'o') 
@@ -104,22 +107,34 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
                     }
                     if (offset < data_len) {
                         name_offset = offset;
+#ifdef XT_TLS_DEBUG
+                        printk("[xt_tls] HTTP host name offset %d\n",name_offset);
+#endif
                         while (offset < data_len && data[offset] != 0x0D && data[offset] != 0x0A) {
                             offset++;
                         }
                         name_length = offset - name_offset;
+#ifdef XT_TLS_DEBUG
+                        printk("[xt_tls] HTTP host name length %d\n",name_length);
+#endif
                         if (name_length){
                             // Allocate an extra byte for the null-terminator
                             *dest = kmalloc(name_length + 1, GFP_KERNEL);
                             strncpy(*dest, &data[offset], name_length);
                             // Make sure the string is always null-terminated.
                             (*dest)[name_length] = 0;
+#ifdef XT_TLS_DEBUG
+                            printk("[xt_tls] HTTP host name: %s\n",*dest);
+#endif
                             free_data_buf();
                             return 0;
                         }
                     }
                 }
+                offset++;
             }
+            kfree(data);
+            return EPROTO;
         }
 
         //
