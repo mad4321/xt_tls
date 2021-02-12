@@ -110,14 +110,14 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
 #ifdef XT_TLS_DEBUG
                         printk("[xt_tls] HTTP host name offset %d\n",name_offset);
 #endif
-                        while (offset < data_len && data[offset] != 0x0D && data[offset] != 0x0A) {
+                        while (offset < data_len && data[offset] != 0x0D && data[offset] != 0x0A && data[offset] != 0x00) {
                             offset++;
                         }
                         name_length = offset - name_offset;
 #ifdef XT_TLS_DEBUG
                         printk("[xt_tls] HTTP host name length %d\n",name_length);
 #endif
-                        if (name_length){
+                        if (offset < data_len && name_length){
                             // Allocate an extra byte for the null-terminator
                             *dest = kmalloc(name_length + 1, GFP_KERNEL);
                             strncpy(*dest, &data[name_offset], name_length);
@@ -133,7 +133,7 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
                 }
                 offset++;
             }
-            kfree(data);
+            free_data_buf();
             return EPROTO;
         }
 
