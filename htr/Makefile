@@ -1,5 +1,5 @@
-obj-m += xt_tls.o
-xt_tls-objs := xt_tls_main.o hostset.o
+obj-m += xt_HTR.o
+xt_tls-objs := xt_HTR.o
 KERNEL_VERSION := $(shell uname -r)
 IDIR := /lib/modules/$(KERNEL_VERSION)/kernel/net/netfilter/
 KDIR := /lib/modules/$(KERNEL_VERSION)/build
