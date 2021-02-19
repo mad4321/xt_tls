@@ -1,9 +1,9 @@
 */*.ko
 */*.o
 */*.so
-src/Module.symvers
-src/modules.order
-src/*.cmd
-src/*.mod.c
-src/.tmp_versions/
-src/.cache.mk
+*/Module.symvers
+*/modules.order
+*/*.cmd
+*/*.mod.c
+*/.tmp_versions/
+*/.cache.mk

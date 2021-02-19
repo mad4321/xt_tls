@@ -20,3 +20,16 @@ clean:
 	    rm -rf Module.markers modules.order Module.symvers \
 	           *.ko *.mod.c *.mod.o *.o .*.o.cmd .*.ko.cmd .cache.mk \
 	           .tmp_versions
+
+dkms-install:
+	. ./dkms.conf; \
+		mkdir /usr/src/$${PACKAGE_NAME}-$${PACKAGE_VERSION}; \
+		cp -r * /usr/src/$${PACKAGE_NAME}-$${PACKAGE_VERSION}; \
+		dkms add -m $${PACKAGE_NAME} -v $${PACKAGE_VERSION}; \
+		dkms build -m $${PACKAGE_NAME} -v $${PACKAGE_VERSION}; \
+		dkms install -m $${PACKAGE_NAME} -v $${PACKAGE_VERSION}
+dkms-uninstall:
+	. ./dkms.conf; \
+		dkms uninstall -m $${PACKAGE_NAME} -v $${PACKAGE_VERSION}; \
+		dkms remove -m $${PACKAGE_NAME} -v $${PACKAGE_VERSION} --all; \
+		rm -rf /usr/src/$${PACKAGE_NAME}-$${PACKAGE_VERSION}
