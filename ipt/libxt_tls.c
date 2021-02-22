@@ -9,15 +9,18 @@ enum {
 	O_TLS_HOST = 0,
 	O_TLS_HOSTSET = 1,
 	O_TLS_SUFFIX = 2,
+	O_TLS_HTTP = 3,
 };
 
 static void tls_help(void)
 {
 	printf(
 		"tls match options:\n"
+		"  [--tls-http]\n"
 		"  [!] --tls-host hostname\n"
 		"  [!] --tls-hostset [--tls-suffix] hostset-name\n"
 		"  --tls-host and --tls-hostset are mutually exclusive\n"
+		"  --tls-http match hostname in GET/POST HTTP cleartext requests\n"
 		"  The content of the hostset <HS> is accessible through "
 		    "/proc/net/"PROC_FS_MODULE_DIR"/"PROC_FS_HOSTSET_SUBDIR"/<HS>\n"
 	);
@@ -42,6 +45,10 @@ static const struct xt_option_entry tls_opts[] = {
 		.name = "tls-suffix",
 		.id = O_TLS_SUFFIX,
 	},
+	{
+		.name = "tls-http",
+		.id = O_TLS_HTTP,
+	},
 	XTOPT_TABLEEND,
 };
 
@@ -64,6 +71,9 @@ static void tls_parse(struct xt_option_call *cb)
 		case O_TLS_SUFFIX:
 			info->op_flags |= XT_TLS_OP_SUFFIX;
 			break;
+		case O_TLS_HTTP:
+			info->op_flags |= XT_TLS_OP_HTTP;
+			break;
 	}
 }
 
@@ -81,7 +91,11 @@ static void tls_print(const void *ip, const struct xt_entry_match *match, int nu
 	const struct xt_tls_info *info = (const struct xt_tls_info *)match->data;
 	char *suffix_match = info->op_flags & XT_TLS_OP_SUFFIX ? "suffix-" : "";
 
-	printf(" TLS %smatch", suffix_match);
+	if (info->op_flags & XT_TLS_OP_HTTP) {
+	    printf(" HTTP %smatch", suffix_match);
+	} else {
+	    printf(" TLS %smatch", suffix_match);
+	}
 	if (info->op_flags & XT_TLS_OP_HOST) {
 	    bool invert = info->inversion_flags & XT_TLS_OP_HOST;
 	    printf("%s host %s", invert ? " !":"", info->host_or_set_name);
@@ -96,6 +110,10 @@ static void tls_print(const void *ip, const struct xt_entry_match *match, int nu
 static void tls_save(const void *ip, const struct xt_entry_match *match)
 {
 	const struct xt_tls_info *info = (const struct xt_tls_info *)match->data;
+
+	if (info->op_flags & XT_TLS_OP_HTTP) {
+	    printf(" --tls-http");
+	}//if
 
 	if (info->op_flags & XT_TLS_OP_HOST) {
 	    bool invert = info->inversion_flags & XT_TLS_OP_HOST;

@@ -27,6 +27,7 @@ static struct host_set *host_set_table;
 // The proc-fs subdirectory for hostsets
 struct proc_dir_entry *proc_fs_dir, *proc_fs_hostset_dir;
 
+
 /*
  * Searches through skb->data and looks for a
  * client or server handshake. A client
@@ -34,7 +35,7 @@ struct proc_dir_entry *proc_fs_dir, *proc_fs_hostset_dir;
  * field tells us what domain the client
  * wants to connect to.
  */
-static int get_tls_hostname(const struct sk_buff *skb, char **dest)
+static int get_tls_hostname(const struct sk_buff *skb, char **dest, bool http_matching)
 {
 	char *data, *tail;
 	size_t data_len;
@@ -90,12 +91,13 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
 	printk("[xt_tls] Content-type=0x%X\n", (unsigned char)data[0]);
 #endif
 
-        // HTTP check
+    // HTTP check
+    if (http_matching) {
         if (data_len>20 && (data[0] == 'G' || data[0] == 'P') && (data[1] == 'E' || data[1] == 'O') && (data[2] == 'T' || data[2] == 'S') && (data[3] == ' ' || data[3] == 'T')) {
+	    u_int offset = 4, name_offset = 0, name_length = 0;
 #ifdef XT_TLS_DEBUG
-            printk("[xt_tls] found HTTP header, data len: %d\n",data_len);
+            printk("[xt_tls] found HTTP header, data len: %ld\n",data_len);
 #endif
-            u_int offset = 4, name_offset = 0, name_length = 0;
             while (offset < data_len) {
                 if (offset < data_len-5 && (data[offset] == 'H' || data[offset] == 'h') 
                                         && (data[offset+1] == 'O' || data[offset+1] == 'o') 
@@ -133,11 +135,11 @@ static int get_tls_hostname(const struct sk_buff *skb, char **dest)
                 }
                 offset++;
             }
-            free_data_buf();
-            return EPROTO;
         }
-
-        //
+        free_data_buf();
+        return EPROTO;
+    }
+    //
 
 	// If this isn't an TLS handshake, abort
 	if (data[0] != 0x16) {
@@ -301,9 +303,10 @@ static bool tls_mt(const struct sk_buff *skb, struct xt_action_param *par)
 	    (info->inversion_flags & XT_TLS_OP_HOSTSET) :
 	    (info->inversion_flags & XT_TLS_OP_HOST);
 	bool suffix_matching = info->op_flags & XT_TLS_OP_SUFFIX;
+	bool http_matching   = info->op_flags & XT_TLS_OP_HTTP;
 	bool match;
 
-	if ((result = get_tls_hostname(skb, &parsed_host)) != 0)
+	if ((result = get_tls_hostname(skb, &parsed_host, http_matching)) != 0)
 		return false;
 
 	switch (pattern_type) {

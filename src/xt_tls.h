@@ -4,6 +4,7 @@
 #define XT_TLS_OP_HOST      0x01
 #define XT_TLS_OP_HOSTSET   0x02
 #define XT_TLS_OP_SUFFIX    0x04
+#define XT_TLS_OP_HTTP      0x08
 
 #define MAX_HOSTNAME_LEN 255
 #define MAX_HOSTSET_NAME_LEN 31

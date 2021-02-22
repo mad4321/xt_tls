@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "../htr/xt_HTR.h"
+#include "../xt_htr/xt_HTR.h"
 
 enum {
         O_HTR_HOST = 0,
@@ -13,7 +13,7 @@ static void htr_help(void)
 {
         printf(
                 "HTR action options:\n"
-                "  --host hostname\n"
+                "  --host URL\n"
         );
 }
 
@@ -56,7 +56,7 @@ static void htr_save(const void *ip, const struct xt_entry_target *tg)
 {
         const struct xt_htr_info *info = (const struct xt_htr_info *)tg->data;
         if (info->op_flags & XT_HTR_OP_HOST) {
-            printf("--host %s", info->host);
+            printf(" --host %s", info->host);
         }//if
 }
 
